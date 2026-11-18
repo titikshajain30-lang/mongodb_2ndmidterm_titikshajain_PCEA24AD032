@@ -1,0 +1,165 @@
+Scenario A4 – Banking App: Building and Checking a Replica Set
+
+Database: bankDB
+Replica Set Name:rs0
+MongoDB Ports:27017 , 27018, 2701
+
+Task 1:
+
+Terminal 1:
+
+mongod --replSet rs0 --port 27017 --dbpath C:\data\rs0-1 --bind_ip localhost
+
+Terminal 2:
+
+mongod --replSet rs0 --port 27018 --dbpath C:\data\rs0-2 --bind_ip localhost
+
+Terminal 3:
+
+mongod --replSet rs0 --port 27019 --dbpath C:\data\rs0-3 --bind_ip localhost
+
+
+rs.initiate({
+    _id: "rs0",
+    members: [
+        { _id: 0, host: "localhost:27017" },
+        { _id: 1, host: "localhost:27018" },
+        { _id: 2, host: "localhost:27019" }
+    ]
+})
+
+
+rs.status()
+
+Expected output
+
+{
+    ok: 1
+}
+
+rs0 [direct: primary] test>
+
+
+Task 2: Identify PRIMARY and SECONDARY members
+
+rs.status()
+
+rs.status().members.forEach(m => {
+    print({
+        name: m.name,
+        state: m.stateStr,
+        health: m.health
+    });
+});
+
+output:
+[
+    {
+        name: "localhost:27017",
+        state: "PRIMARY",
+        health: 1
+    },
+    {
+        name: "localhost:27018",
+        state: "SECONDARY",
+        health: 1
+    },
+    {
+        name: "localhost:27019",
+        state: "SECONDARY",
+        health: 1
+    }
+]
+
+Task 3: Insert an account using majority write concern
+
+
+use bankDB
+
+db.accounts.insertOne(
+    {
+        accNo: 1001,
+        holder: "Kumar",
+        balance: 5000
+    },
+    {
+        writeConcern: {
+            w: "majority",
+            wtimeout: 5000
+        }
+    }
+)
+
+
+output:
+
+{
+    acknowledged: true,
+    insertedId: ObjectId("...")
+}
+
+
+Task 4: Set read preference to secondaryPreferred and read the account
+
+db.getMongo().setReadPref("secondaryPreferred")
+
+db.accounts.find({ accNo: 1001 }
+
+Expected output:
+
+[
+    {
+        _id: ObjectId("..."),
+        accNo: 1001,
+        holder: "Kumar",
+        balance: 5000
+    }
+]
+
+
+Task 5: Inspect the oplog entry created by your insert
+
+use local
+
+db.oplog.rs.find().sort({ $natural: -1 }).limit(5).pretty()
+
+output:
+
+{
+    op: "i",
+    ns: "bankDB.accounts",
+    o: {
+        _id: ObjectId("..."),
+        accNo: 1001,
+        holder: "Kumar",
+        balance: 5000
+    },
+    ts: Timestamp({ t: 1760000000, i: 1 })
+}
+
+
+Task 6: Force the primary to step down and observe a new primary election
+
+
+
+rs.status()
+
+rs.stepDown()
+
+rs.status()
+
+Expected output:
+
+
+{
+    name: "localhost:27018",
+    stateStr: "PRIMARY",
+    health: 1
+}
+
+Task 7: Check replication health and replication lag
+
+rs.status()
+
+rs.printSecondaryReplicationInfo()
+

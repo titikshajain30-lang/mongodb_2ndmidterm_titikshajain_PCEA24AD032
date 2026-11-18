@@ -1,0 +1,231 @@
+Scenario A2 – Student Records: Insert, Query, Sort and Project
+
+all 8 tasks with commands and expected outputs
+
+Database: collegeDB
+Collection: students
+
+code
+
+use collegeDB
+
+db.createCollection("students")
+
+
+Task 1: Insert Arun using insertOne()
+
+db.students.insertOne({
+    _id: 101,
+    name: "Arun",
+    dept: "CSE",
+    marks: 78,
+    scores: [
+        { subject: "DBMS", mark: 85 },
+        { subject: "Maths", mark: 70 }
+    ]
+})
+
+
+output
+
+{
+    acknowledged: true,
+    insertedId: 101
+}
+
+Task 2: Insert another student with the same \_id
+
+db.students.insertOne({
+    _id: 101,
+    name: "Kiran",
+    dept: "IT",
+    marks: 80,
+    scores: [
+        { subject: "DBMS", mark: 75 },
+        { subject: "Maths", mark: 80 }
+    ]
+})
+
+
+Expected error:
+
+MongoServerError: E11000 duplicate key error
+collection: collegeDB.students
+index: _id_
+dup key: { _id: 101 }
+
+
+Task 3: Insert remaining five students using insertMany()
+
+db.students.insertMany([
+    {
+        _id: 102,
+        name: "Bala",
+        dept: "IT",
+        marks: 66,
+        scores: [
+            { subject: "DBMS", mark: 60 },
+            { subject: "Maths", mark: 72 }
+        ]
+    },
+    {
+        _id: 103,
+        name: "Chitra",
+        dept: "CSE",
+        marks: 91,
+        scores: [
+            { subject: "DBMS", mark: 95 },
+            { subject: "Maths", mark: 87 }
+        ]
+    },
+    {
+        _id: 104,
+        name: "Divya",
+        dept: "ECE",
+        marks: 72,
+        scores: [
+            { subject: "DBMS", mark: 55 },
+            { subject: "Maths", mark: 89 }
+        ]
+    },
+    {
+        _id: 105,
+        name: "Eswar",
+        dept: "IT",
+        marks: 84,
+        scores: [
+            { subject: "DBMS", mark: 88 },
+            { subject: "Maths", mark: 80 }
+        ]
+    },
+    {
+        _id: 106,
+        name: "Farah",
+        dept: "CSE",
+        marks: 59,
+        scores: [
+            { subject: "DBMS", mark: 45 },
+            { subject: "Maths", mark: 73 }
+        ]
+    }
+])
+
+output:
+
+{
+    acknowledged: true,
+    insertedIds: {
+        '0': 102,
+        '1': 103,
+        '2': 104,
+        '3': 105,
+        '4': 106
+    }
+}
+
+
+Task 4: List all students of CSE department
+
+db.students.find({ dept: "CSE" })
+
+output – 3 documents:
+
+ Name    Department  Marks 
+  
+ Arun    CSE         78    
+ Chitra  CSE         91    
+ Farah   CSE         59    
+
+Task 5: List students whose overall marks are 75 or more
+
+
+db.students.find({
+    marks: { $gte: 75 }
+})
+
+
+output – 3 documents:
+
+ Name    Marks  
+ Arun    78    
+ Chitra  91    
+ Eswar   84    
+
+
+Task 6: List students belonging to either CSE or IT department
+
+db.students.find({
+    dept: { $in: ["CSE", "IT"] }
+})
+
+
+Expected output – 5 documents:
+
+ Name    Department 
+ 
+ Arun    CSE        
+ Bala    IT         
+ Chitra  CSE        
+ Eswar   IT         
+ Farah   CSE        
+
+
+Task 7: Find students who scored more than 80 in DBMS
+
+db.students.find({
+    scores: {
+        $elemMatch: {
+            subject: "DBMS",
+            mark: { $gt: 80 }
+        }
+    }
+})
+
+
+Expected output – 3 documents:
+
+ Name    DBMS Marks 
+
+ Arun     85         
+ Chitra   95         
+ Eswar    88         
+
+
+Task 8: Display top 3 students using sorting, limiting and projection
+
+db.students.find(
+    {},
+    {
+        _id: 0,
+        name: 1,
+        marks: 1
+    }
+).sort({ marks: -1 }).limit(3)
+
+Expected output:
+
+[
+    {
+        name: "Chitra",
+        marks: 91
+    },
+    {
+        name: "Eswar",
+        marks: 84
+    },
+    {
+        name: "Arun",
+        marks: 78
+    }
+]
+
+
+Scenario A4 – Banking App: Building and Checking a Replica Set
+
+Database: bankDB
+Replica Set Name:rs0
+MongoDB Ports:27017 , 27018, 2701
+
+
+
+
